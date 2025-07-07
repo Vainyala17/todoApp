@@ -131,26 +131,6 @@ class TaskProvider with ChangeNotifier {
     }
   }
 
-  // Clear completed tasks
-  Future<void> clearCompletedTasks() async {
-    _setLoading(true);
-    _setError(null);
-
-    try {
-      final completedTasks = _tasks.where((task) => task.isCompleted).toList();
-      for (TaskModel task in completedTasks) {
-        if (task.id != null) {
-          await _taskService.deleteTask(task.id!);
-        }
-      }
-      _tasks.removeWhere((task) => task.isCompleted);
-      _setLoading(false);
-    } catch (e) {
-      _setError('Failed to clear completed tasks: ${e.toString()}');
-      _setLoading(false);
-    }
-  }
-
   // Clear error message
   void clearError() {
     _setError(null);

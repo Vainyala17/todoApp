@@ -5,7 +5,7 @@ import '../models/task_model.dart';
 
 class TaskService {
   // Replace with your Firebase Realtime Database URL
-  static const String _baseUrl = 'https://your-project-id-default-rtdb.firebaseio.com';
+  static const String _baseUrl = 'https://todoapp-34f22-default-rtdb.firebaseio.com';
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -20,6 +20,8 @@ class TaskService {
 
   // Get all tasks for current user
   Future<List<TaskModel>> getAllTasks() async {
+    print("🟢 TaskService currentUserId: $_currentUserId");
+
     if (_currentUserId == null) {
       throw Exception('User not authenticated');
     }

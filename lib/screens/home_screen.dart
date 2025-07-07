@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../ widgets/custom_textfield.dart';
 import '../providers/task_provider.dart';
 import '../models/task_model.dart';
 import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -24,7 +26,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<TaskProvider>(context, listen: false).fetchTasks();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Provider.of<TaskProvider>(context, listen: false).fetchTasks();
+      } else {
+        print("❌ No user signed in!");
+      }
     });
   }
 
@@ -310,6 +317,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
+  void _logout() async {
+    await _authService.signOut();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => LoginScreen()),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -328,9 +344,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               PopupMenuButton<String>(
                 onSelected: (value) async {
                   if (value == 'logout') {
-                    await _authService.signOut();
-                  } else if (value == 'clear_completed') {
-                    await taskProvider.clearCompletedTasks();
+                    _logout();
                   } else if (value == 'clear_all') {
                     showDialog(
                       context: context,
@@ -357,16 +371,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 },
                 itemBuilder: (context) => [
                   PopupMenuItem(
-                    value: 'clear_completed',
-                    child: Row(
-                      children: [
-                        Icon(Icons.clear_all, size: 18),
-                        SizedBox(width: 8),
-                        Text('Clear Completed'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
                     value: 'clear_all',
                     child: Row(
                       children: [
@@ -390,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ],
             bottom: PreferredSize(
-              preferredSize: Size.fromHeight(100),
+              preferredSize: Size.fromHeight(100), // Increased from 100 to 160
               child: Column(
                 children: [
                   // Search Bar
@@ -425,19 +429,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       },
                     ),
                   ),
-                  // Task Statistics
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatCard('Total', taskProvider.taskCount, Colors.blue),
-                        _buildStatCard('Pending', taskProvider.pendingTaskCount, Colors.orange),
-                        _buildStatCard('Completed', taskProvider.completedTaskCount, Colors.green),
-                      ],
-                    ),
-                  ),
-                  // Tab Bar
                   TabBar(
                     controller: _tabController,
                     indicatorColor: Colors.white,
